@@ -11,6 +11,7 @@ use Illuminate\Support\Carbon;
  * @property string|null $name
  * @property string|null $aiub_id
  * @property string|null $email
+ * @property string|null $outlook_email
  * @property string|null $phone_no
  * @property string|null $gender
  * @property string|null $size

@@ -20,6 +20,7 @@ beforeEach(function () {
         $table->text('name')->nullable();
         $table->text('aiub_id')->nullable();
         $table->text('email')->nullable();
+        $table->text('outlook_email')->nullable();
         $table->text('phone_no')->nullable();
         $table->text('gender')->nullable();
         $table->text('size')->nullable();
@@ -278,6 +279,41 @@ test('admin can queue one development invitation for their own address', functio
         return $job->uuid === $uuid && $job->recipientEmail === 'admin@example.com';
     });
     $this->assertDatabaseHas('attendees', ['uuid' => $uuid, 'invitation_email_status' => 'queued']);
+});
+
+test('admin can queue invitations using Outlook email addresses', function () {
+    Queue::fake([SendMemberOrientationInvitation::class]);
+    config(['mail.attendee_dev_mode' => false]);
+    $admin = User::factory()->create(['role' => 'admin']);
+    $uuid = (string) Str::uuid();
+    DB::table('attendees')->insert([
+        'uuid' => $uuid,
+        'email' => 'member@example.com',
+        'outlook_email' => '23-50945-1@student.aiub.edu',
+    ]);
+
+    Livewire::actingAs($admin)
+        ->test('pages::attendees')
+        ->set('recipientColumn', 'outlook_email')
+        ->call('queueInvitation', $uuid)
+        ->assertHasNoErrors();
+
+    Queue::assertPushed(SendMemberOrientationInvitation::class, fn (SendMemberOrientationInvitation $job): bool => $job->recipientEmail === '23-50945-1@student.aiub.edu');
+});
+
+test('admin cannot queue invitations using an unsupported email column', function () {
+    Queue::fake([SendMemberOrientationInvitation::class]);
+    $admin = User::factory()->create(['role' => 'admin']);
+    $uuid = (string) Str::uuid();
+    DB::table('attendees')->insert(['uuid' => $uuid]);
+
+    Livewire::actingAs($admin)
+        ->test('pages::attendees')
+        ->set('recipientColumn', 'uuid')
+        ->call('queueInvitation', $uuid)
+        ->assertHasErrors(['recipientColumn']);
+
+    Queue::assertNothingPushed();
 });
 
 test('admin can reset a finished invitation to not queued', function (string $status) {

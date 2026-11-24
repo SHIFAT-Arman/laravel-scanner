@@ -30,6 +30,8 @@ new #[Title('Attendees')] class extends Component
 
     public string $status = 'all';
 
+    public string $recipientColumn = 'email';
+
     public bool $showForm = false;
 
     public bool $showQr = false;
@@ -397,10 +399,13 @@ new #[Title('Attendees')] class extends Component
     /** @param array<int, string> $uuids */
     private function dispatchInvitations(array $uuids): void
     {
+        $recipientColumn = $this->validate([
+            'recipientColumn' => ['required', Rule::in(['email', 'outlook_email'])],
+        ])['recipientColumn'];
         $adminEmail = auth()->user()->email;
         $memberEmails = config('mail.attendee_dev_mode')
             ? []
-            : Attendee::query()->whereIn('uuid', $uuids)->pluck('email', 'uuid')->all();
+            : Attendee::query()->whereIn('uuid', $uuids)->pluck($recipientColumn, 'uuid')->all();
         $queuedUuids = DB::transaction(function () use ($uuids): array {
             $queuedUuids = [];
 
@@ -456,7 +461,11 @@ new #[Title('Attendees')] class extends Component
             <flux:text class="mt-2">{{ __('Search attendees and manage their details.') }}</flux:text>
         </div>
 
-        <div class="grid grid-cols-2 gap-2 sm:flex">
+        <div class="grid grid-cols-2 gap-2 sm:flex sm:items-end">
+            <flux:select wire:model="recipientColumn" :label="__('Invitation email')">
+                <flux:select.option value="email">{{ __('Email') }}</flux:select.option>
+                <flux:select.option value="outlook_email">{{ __('Outlook email') }}</flux:select.option>
+            </flux:select>
             <flux:button class="min-w-0 whitespace-normal! sm:whitespace-nowrap!" wire:click="downloadSelectedQrs" wire:loading.attr="disabled" wire:target="downloadSelectedQrs">
                 {{ __('Download selected QRs') }}
             </flux:button>
