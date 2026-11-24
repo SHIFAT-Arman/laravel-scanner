@@ -16,9 +16,10 @@ RUN npm run build
 
 FROM php:8.5-fpm-alpine AS app
 
-RUN docker-php-ext-install pcntl \
-    && docker-php-ext-install pdo_pgsql \
-    && docker-php-ext-install opcache
+RUN apk add --no-cache --virtual .pgsql-build-deps postgresql-dev \
+    && apk add --no-cache libpq \
+    && docker-php-ext-install pcntl pdo_pgsql opcache \
+    && apk del .pgsql-build-deps
 
 WORKDIR /var/www/html
 COPY --chown=www-data:www-data . .

@@ -507,9 +507,12 @@ new #[Title('Attendees')] class extends Component
     </div>
 
     <flux:card>
+        <flux:checkbox.group wire:model.live="selected">
         <flux:table :paginate="$this->attendees" bleed>
             <flux:table.columns>
-                <flux:table.column><span class="sr-only">{{ __('Select') }}</span></flux:table.column>
+                <flux:table.column>
+                    <flux:checkbox.all :aria-label="__('Select all attendees on this page')" />
+                </flux:table.column>
                 <flux:table.column>{{ __('Attendee') }}</flux:table.column>
                 <flux:table.column>{{ __('AIUB ID') }}</flux:table.column>
                 <flux:table.column>{{ __('T-shirt size') }}</flux:table.column>
@@ -523,7 +526,7 @@ new #[Title('Attendees')] class extends Component
                 @forelse ($this->attendees as $attendee)
                     <flux:table.row :key="$attendee->uuid">
                         <flux:table.cell>
-                            <flux:checkbox wire:model="selected" value="{{ $attendee->uuid }}" :aria-label="__('Select :name', ['name' => $attendee->name ?: $attendee->uuid])" />
+                            <flux:checkbox value="{{ $attendee->uuid }}" :aria-label="__('Select :name', ['name' => $attendee->name ?: $attendee->uuid])" />
                         </flux:table.cell>
                         <flux:table.cell>
                             <div class="flex flex-col">
@@ -580,7 +583,12 @@ new #[Title('Attendees')] class extends Component
                 @endforelse
             </flux:table.rows>
         </flux:table>
+        </flux:checkbox.group>
 
+        <div class="mt-3 flex items-center justify-between gap-3">
+            <flux:text>{{ trans_choice(':count attendee selected|:count attendees selected', count($selected), ['count' => count($selected)]) }}</flux:text>
+            <flux:text size="sm">{{ __('Select all applies to this page.') }}</flux:text>
+        </div>
         <flux:error name="selected" />
     </flux:card>
 
