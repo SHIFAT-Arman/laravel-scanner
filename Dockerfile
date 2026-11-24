@@ -1,3 +1,9 @@
+FROM composer:2 AS vendor
+
+WORKDIR /app
+COPY composer.json composer.lock ./
+RUN composer install --no-dev --no-interaction --no-scripts --prefer-dist --optimize-autoloader
+
 FROM node:22-alpine AS assets
 
 WORKDIR /app
@@ -5,13 +11,8 @@ COPY package.json package-lock.json ./
 RUN npm ci
 COPY resources resources
 COPY vite.config.js ./
+COPY --from=vendor /app/vendor vendor
 RUN npm run build
-
-FROM composer:2 AS vendor
-
-WORKDIR /app
-COPY composer.json composer.lock ./
-RUN composer install --no-dev --no-interaction --no-scripts --prefer-dist --optimize-autoloader
 
 FROM php:8.5-fpm-alpine AS app
 
