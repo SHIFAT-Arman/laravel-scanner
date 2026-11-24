@@ -1,0 +1,18 @@
+#!/usr/bin/env sh
+set -eu
+
+backup=${1:-}
+
+if [ -z "$backup" ] || [ ! -f "backups/$backup" ]; then
+    echo "Usage: $0 <backup filename from backups/>" >&2
+    exit 1
+fi
+
+printf 'Restore %s and replace the current database contents? [y/N] ' "$backup"
+read -r answer
+[ "$answer" = y ] || [ "$answer" = Y ] || exit 1
+
+env_file=${ENV_FILE:-.env.production}
+ENV_FILE="$env_file" docker compose --env-file "$env_file" --profile ops run --rm \
+    -e "BACKUP_FILE=$backup" database-tools \
+    sh -c 'pg_restore --clean --if-exists --no-owner --dbname="$DB_URL" "/backups/$BACKUP_FILE"'

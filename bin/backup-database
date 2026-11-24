@@ -1,0 +1,7 @@
+#!/usr/bin/env sh
+set -eu
+
+mkdir -p backups
+env_file=${ENV_FILE:-.env.production}
+ENV_FILE="$env_file" docker compose --env-file "$env_file" --profile ops run --rm database-tools \
+    sh -c 'pg_dump --dbname="$DB_URL" --format=custom --file="/backups/$(date -u +%Y%m%dT%H%M%SZ).dump"'

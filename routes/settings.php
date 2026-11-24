@@ -17,3 +17,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ])
         ->name('security.edit');
 });
+
+Route::livewire('settings/attendee-display', 'pages::settings.attendee-display')
+    ->middleware(['auth', 'verified', 'admin'])
+    ->name('attendee-display.edit');

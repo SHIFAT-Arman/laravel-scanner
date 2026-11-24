@@ -16,6 +16,7 @@ use Illuminate\Support\Str;
  * @property int $id
  * @property string $name
  * @property string $email
+ * @property string $role
  * @property Carbon|null $email_verified_at
  * @property string $password
  * @property string|null $two_factor_secret
@@ -55,5 +56,15 @@ class User extends Authenticatable implements MustVerifyEmail
         return Str::length($initials) > 1
             ? Str::substr($initials, 0, 1).Str::substr($initials, -1)
             : $initials;
+    }
+
+    public function isAdmin(): bool
+    {
+        return $this->role === 'admin';
+    }
+
+    public function isStaff(): bool
+    {
+        return $this->role === 'staff';
     }
 }

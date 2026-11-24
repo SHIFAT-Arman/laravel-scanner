@@ -15,6 +15,17 @@
                     <flux:sidebar.item icon="home" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate>
                         {{ __('Dashboard') }}
                     </flux:sidebar.item>
+                    <flux:sidebar.item icon="qr-code" :href="route('scanner')" :current="request()->routeIs('scanner')" wire:navigate>
+                        {{ __('Scanner') }}
+                    </flux:sidebar.item>
+                    @if (auth()->user()->isAdmin())
+                        <flux:sidebar.item icon="users" :href="route('attendees.index')" :current="request()->routeIs('attendees.index')" wire:navigate>
+                            {{ __('Attendees') }}
+                        </flux:sidebar.item>
+                        <flux:sidebar.item icon="user-group" :href="route('staff.index')" :current="request()->routeIs('staff.index')" wire:navigate>
+                            {{ __('Staff') }}
+                        </flux:sidebar.item>
+                    @endif
                 </flux:sidebar.group>
             </flux:sidebar.nav>
 

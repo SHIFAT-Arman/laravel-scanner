@@ -2,6 +2,8 @@
 
 return [
 
+    'attendee_dev_mode' => env('ATTENDEE_MAIL_DEV_MODE', false),
+
     /*
     |--------------------------------------------------------------------------
     | Default Mailer
