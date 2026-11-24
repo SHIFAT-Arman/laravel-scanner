@@ -15,7 +15,9 @@ RUN composer install --no-dev --no-interaction --no-scripts --prefer-dist --opti
 
 FROM php:8.5-fpm-alpine AS app
 
-RUN docker-php-ext-install opcache pcntl pdo_pgsql
+RUN docker-php-ext-install pcntl \
+    && docker-php-ext-install pdo_pgsql \
+    && docker-php-ext-install opcache
 
 WORKDIR /var/www/html
 COPY --chown=www-data:www-data . .
