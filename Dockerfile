@@ -18,14 +18,20 @@ FROM php:8.5-fpm-alpine AS app
 
 RUN apk add --no-cache --virtual .pgsql-build-deps postgresql-dev \
     && apk add --no-cache libpq \
-    && docker-php-ext-install pcntl pdo_pgsql opcache \
+    && docker-php-ext-install pcntl pdo_pgsql \
     && apk del .pgsql-build-deps
+
+RUN { \
+      echo 'opcache.enable=1'; \
+      echo 'opcache.validate_timestamps=0'; \
+      echo 'opcache.memory_consumption=128'; \
+    } > /usr/local/etc/php/conf.d/opcache.ini
 
 WORKDIR /var/www/html
 COPY --chown=www-data:www-data . .
 COPY --from=vendor --chown=www-data:www-data /app/vendor vendor
 COPY --from=assets --chown=www-data:www-data /app/public/build public/build
-RUN mkdir -p storage/framework/{cache,sessions,views} storage/logs bootstrap/cache \
+RUN mkdir -p storage/framework/cache storage/framework/sessions storage/framework/views storage/logs bootstrap/cache \
     && chown -R www-data:www-data storage bootstrap/cache
 
 USER www-data
