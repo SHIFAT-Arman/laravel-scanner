@@ -227,7 +227,7 @@ new #[Title('Attendees')] class extends Component
 
         Attendee::query()
             ->whereKey($uuid)
-            ->whereIn('invitation_email_status', ['sent', 'failed'])
+            ->whereIn('invitation_email_status', ['queued', 'sent', 'failed'])
             ->update([
                 'invitation_email_status' => null,
                 'invitation_email_sent_at' => null,
@@ -584,7 +584,7 @@ new #[Title('Attendees')] class extends Component
                                     <flux:badge size="sm" :color="match ($attendee->invitation_email_status) { 'sent' => 'green', 'failed' => 'red', default => 'amber' }">
                                         {{ __(ucfirst($attendee->invitation_email_status)) }}
                                     </flux:badge>
-                                    @if (in_array($attendee->invitation_email_status, ['sent', 'failed'], true))
+                                    @if (in_array($attendee->invitation_email_status, ['queued', 'sent', 'failed'], true))
                                         <flux:button size="sm" wire:click="resetInvitation(@js($attendee->uuid))" wire:confirm="{{ __('Reset this email to not queued?') }}">
                                             {{ __('Reset') }}
                                         </flux:button>

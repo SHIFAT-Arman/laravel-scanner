@@ -5,7 +5,6 @@ namespace App\Jobs;
 use App\Actions\Attendees\GenerateAttendeeQr;
 use App\Mail\MemberOrientationInvitation;
 use App\Models\Attendee;
-use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Mail;
@@ -13,15 +12,13 @@ use Illuminate\Support\Str;
 use RuntimeException;
 use Throwable;
 
-class SendMemberOrientationInvitation implements ShouldBeUnique, ShouldQueue
+class SendMemberOrientationInvitation implements ShouldQueue
 {
     use Queueable;
 
     public int $tries = 3;
 
     public int $timeout = 60;
-
-    public int $uniqueFor = 3600;
 
     /** @var array<int, int> */
     public array $backoff = [10, 30];
@@ -71,11 +68,6 @@ class SendMemberOrientationInvitation implements ShouldBeUnique, ShouldQueue
 
             throw $exception;
         }
-    }
-
-    public function uniqueId(): string
-    {
-        return $this->uuid;
     }
 
     public function failed(?Throwable $exception): void

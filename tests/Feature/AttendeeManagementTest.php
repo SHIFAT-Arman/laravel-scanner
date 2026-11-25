@@ -373,7 +373,7 @@ test('admin can reset a finished invitation to not queued', function (string $st
         'invitation_email_sent_at' => null,
         'invitation_email_error' => null,
     ]);
-})->with(['sent', 'failed']);
+})->with(['queued', 'sent', 'failed']);
 
 test('queued development invitation remains addressed to the admin and sends only once', function () {
     Mail::fake();
