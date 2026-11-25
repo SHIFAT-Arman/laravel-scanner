@@ -59,6 +59,41 @@ test('admin can search and filter attendees', function () {
         ->assertDontSeeText('Ada Lovelace');
 });
 
+test('admin can show one hundred attendees per page', function () {
+    $admin = User::factory()->create(['role' => 'admin']);
+    DB::table('attendees')->insert(collect(range(1, 101))->map(fn (int $number): array => [
+        'uuid' => (string) Str::uuid(),
+        'name' => sprintf('Attendee %03d', $number),
+    ])->all());
+
+    Livewire::actingAs($admin)
+        ->test('pages::attendees')
+        ->set('perPage', 100)
+        ->assertSeeText('Attendee 100')
+        ->assertDontSeeText('Attendee 101');
+});
+
+test('admin can reset a received attendee', function () {
+    $admin = User::factory()->create(['role' => 'admin']);
+    $uuid = (string) Str::uuid();
+    DB::table('attendees')->insert([
+        'uuid' => $uuid,
+        'received' => true,
+        'received_at' => '2026-11-24 12:00:00',
+    ]);
+
+    Livewire::actingAs($admin)
+        ->test('pages::attendees')
+        ->call('resetReceipt', $uuid)
+        ->assertHasNoErrors();
+
+    $this->assertDatabaseHas('attendees', [
+        'uuid' => $uuid,
+        'received' => false,
+        'received_at' => null,
+    ]);
+});
+
 test('admin can create an attendee with validated fields', function () {
     $admin = User::factory()->create(['role' => 'admin']);
     $uuid = (string) Str::uuid();

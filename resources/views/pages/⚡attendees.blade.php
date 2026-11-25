@@ -32,6 +32,8 @@ new #[Title('Attendees')] class extends Component
 
     public string $recipientColumn = 'email';
 
+    public int $perPage = 10;
+
     public bool $showForm = false;
 
     public bool $showQr = false;
@@ -62,6 +64,11 @@ new #[Title('Attendees')] class extends Component
     }
 
     public function updatedStatus(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedPerPage(): void
     {
         $this->resetPage();
     }
@@ -228,6 +235,19 @@ new #[Title('Attendees')] class extends Component
             ]);
     }
 
+    public function resetReceipt(string $uuid): void
+    {
+        abort_unless(auth()->user()?->isAdmin(), 403);
+
+        Attendee::query()
+            ->whereKey($uuid)
+            ->where('received', true)
+            ->update([
+                'received' => false,
+                'received_at' => null,
+            ]);
+    }
+
     public function queueSelectedInvitations(): void
     {
         abort_unless(auth()->user()?->isAdmin(), 403);
@@ -331,6 +351,7 @@ new #[Title('Attendees')] class extends Component
     public function attendees(): LengthAwarePaginator
     {
         $search = trim($this->search);
+        $perPage = in_array($this->perPage, [10, 50, 100], true) ? $this->perPage : 10;
 
         return Attendee::query()
             ->select(['uuid', 'name', 'aiub_id', 'size', 'phone_no', 'received', 'received_at', 'invitation_email_status', 'invitation_email_sent_at', 'invitation_email_error'])
@@ -343,7 +364,7 @@ new #[Title('Attendees')] class extends Component
             ->when($this->status === 'unreceived', fn ($query) => $query->where('received', false))
             ->orderBy('name')
             ->orderBy('uuid')
-            ->paginate(10);
+            ->paginate($perPage);
     }
 
     /**
@@ -497,12 +518,17 @@ new #[Title('Attendees')] class extends Component
         @endif
     </flux:card>
 
-    <div class="grid gap-4 sm:grid-cols-[1fr_12rem]">
+    <div class="grid gap-4 sm:grid-cols-[1fr_12rem_10rem]">
         <flux:input wire:model.live.debounce.300ms="search" :label="__('Search')" :placeholder="__('UUID or name')" />
         <flux:select wire:model.live="status" :label="__('Receipt status')">
             <flux:select.option value="all">{{ __('All') }}</flux:select.option>
             <flux:select.option value="received">{{ __('Received') }}</flux:select.option>
             <flux:select.option value="unreceived">{{ __('Unreceived') }}</flux:select.option>
+        </flux:select>
+        <flux:select wire:model.live="perPage" :label="__('Rows per page')">
+            <flux:select.option value="10">10</flux:select.option>
+            <flux:select.option value="50">50</flux:select.option>
+            <flux:select.option value="100">100</flux:select.option>
         </flux:select>
     </div>
 
@@ -544,6 +570,11 @@ new #[Title('Attendees')] class extends Component
                                 </flux:badge>
                                 @if ($attendee->received_at)
                                     <span class="text-xs text-zinc-500 dark:text-zinc-400">{{ $attendee->received_at->toDayDateTimeString() }}</span>
+                                @endif
+                                @if ($attendee->received)
+                                    <flux:button size="sm" wire:click="resetReceipt(@js($attendee->uuid))" wire:confirm="{{ __('Reset this attendee to unreceived?') }}">
+                                        {{ __('Reset') }}
+                                    </flux:button>
                                 @endif
                             </div>
                         </flux:table.cell>

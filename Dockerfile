@@ -16,10 +16,10 @@ RUN npm run build
 
 FROM php:8.5-fpm-alpine AS app
 
-RUN apk add --no-cache --virtual .pgsql-build-deps postgresql-dev \
-    && apk add --no-cache libpq \
-    && docker-php-ext-install pcntl pdo_pgsql \
-    && apk del .pgsql-build-deps
+RUN apk add --no-cache --virtual .build-deps libpng-dev postgresql-dev \
+    && apk add --no-cache libpng libpq \
+    && docker-php-ext-install gd pcntl pdo_pgsql \
+    && apk del .build-deps
 
 RUN { \
       echo 'opcache.enable=1'; \
