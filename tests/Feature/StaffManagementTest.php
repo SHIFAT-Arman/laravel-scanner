@@ -46,3 +46,28 @@ test('admin cannot create staff with an existing email', function () {
 
     expect(User::query()->where('email', 'existing@example.com')->count())->toBe(1);
 });
+
+test('admin can promote staff to admin', function () {
+    $admin = User::factory()->create(['role' => 'admin']);
+    $staff = User::factory()->create(['role' => 'staff']);
+
+    Livewire::actingAs($admin)
+        ->test('pages::staff')
+        ->call('promote', $staff->id)
+        ->assertHasNoErrors();
+
+    expect($staff->refresh()->role)->toBe('admin');
+    $this->actingAs($staff)->get(route('staff.index'))->assertOk();
+});
+
+test('staff cannot promote another staff member', function () {
+    $staff = User::factory()->create(['role' => 'staff']);
+    $otherStaff = User::factory()->create(['role' => 'staff']);
+
+    Livewire::actingAs($staff)
+        ->test('pages::staff')
+        ->call('promote', $otherStaff->id)
+        ->assertForbidden();
+
+    expect($otherStaff->fresh()->role)->toBe('staff');
+});

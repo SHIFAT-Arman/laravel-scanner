@@ -54,6 +54,19 @@ new #[Title('Staff')] class extends Component
 
         Flux::toast(variant: 'success', text: __('Staff account created.'));
     }
+
+    public function promote(int $staffId): void
+    {
+        abort_unless(auth()->user()?->isAdmin(), 403);
+
+        User::query()->where('role', 'staff')->findOrFail($staffId)
+            ->forceFill(['role' => 'admin'])
+            ->save();
+
+        unset($this->staff);
+
+        Flux::toast(variant: 'success', text: __('Staff member promoted to admin.'));
+    }
 };
 ?>
 
@@ -83,6 +96,7 @@ new #[Title('Staff')] class extends Component
             <flux:table.columns>
                 <flux:table.column>{{ __('Name') }}</flux:table.column>
                 <flux:table.column>{{ __('Email') }}</flux:table.column>
+                <flux:table.column></flux:table.column>
             </flux:table.columns>
 
             <flux:table.rows>
@@ -90,10 +104,15 @@ new #[Title('Staff')] class extends Component
                     <flux:table.row :key="$staff->id">
                         <flux:table.cell class="font-medium">{{ $staff->name }}</flux:table.cell>
                         <flux:table.cell>{{ $staff->email }}</flux:table.cell>
+                        <flux:table.cell class="text-end">
+                            <flux:button size="sm" wire:click="promote({{ $staff->id }})" wire:confirm="{{ __('Promote this staff member to admin?') }}">
+                                {{ __('Make admin') }}
+                            </flux:button>
+                        </flux:table.cell>
                     </flux:table.row>
                 @empty
                     <flux:table.row>
-                        <flux:table.cell colspan="2">{{ __('No staff accounts yet.') }}</flux:table.cell>
+                        <flux:table.cell colspan="3">{{ __('No staff accounts yet.') }}</flux:table.cell>
                     </flux:table.row>
                 @endforelse
             </flux:table.rows>

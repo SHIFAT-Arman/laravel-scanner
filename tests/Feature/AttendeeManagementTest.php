@@ -59,6 +59,50 @@ test('admin can search and filter attendees', function () {
         ->assertDontSeeText('Ada Lovelace');
 });
 
+test('admin can filter attendees by email status', function () {
+    $admin = User::factory()->create(['role' => 'admin']);
+    DB::table('attendees')->insert([
+        ['uuid' => (string) Str::uuid(), 'name' => 'Sent Invitation', 'invitation_email_status' => 'sent'],
+        ['uuid' => (string) Str::uuid(), 'name' => 'Failed Invitation', 'invitation_email_status' => 'failed'],
+        ['uuid' => (string) Str::uuid(), 'name' => 'Queued Invitation', 'invitation_email_status' => 'queued'],
+    ]);
+
+    Livewire::actingAs($admin)
+        ->test('pages::attendees')
+        ->set('emailStatus', 'sent')
+        ->assertSeeText('Sent Invitation')
+        ->assertDontSeeText('Failed Invitation')
+        ->assertDontSeeText('Queued Invitation')
+        ->set('emailStatus', 'failed')
+        ->assertSeeText('Failed Invitation')
+        ->assertDontSeeText('Sent Invitation')
+        ->assertDontSeeText('Queued Invitation');
+});
+
+test('admin can filter attendees with missing AIUB IDs or duplicate names', function () {
+    $admin = User::factory()->create(['role' => 'admin']);
+    DB::table('attendees')->insert([
+        ['uuid' => (string) Str::uuid(), 'name' => 'Missing Null', 'aiub_id' => null],
+        ['uuid' => (string) Str::uuid(), 'name' => 'Missing Empty', 'aiub_id' => ''],
+        ['uuid' => (string) Str::uuid(), 'name' => 'Duplicate Name', 'aiub_id' => '25-12345-1'],
+        ['uuid' => (string) Str::uuid(), 'name' => 'Duplicate Name', 'aiub_id' => '25-54321-1'],
+        ['uuid' => (string) Str::uuid(), 'name' => 'Unique Name', 'aiub_id' => '25-67890-1'],
+    ]);
+
+    Livewire::actingAs($admin)
+        ->test('pages::attendees')
+        ->set('rowFilter', 'missing_aiub_id')
+        ->assertSeeText('Missing Null')
+        ->assertSeeText('Missing Empty')
+        ->assertDontSeeText('Duplicate Name')
+        ->set('rowFilter', 'duplicate_name')
+        ->assertSeeText('Duplicate Name')
+        ->assertSeeText('25-12345-1')
+        ->assertSeeText('25-54321-1')
+        ->assertDontSeeText('Missing Null')
+        ->assertDontSeeText('Unique Name');
+});
+
 test('admin can show one hundred attendees per page', function () {
     $admin = User::factory()->create(['role' => 'admin']);
     DB::table('attendees')->insert(collect(range(1, 101))->map(fn (int $number): array => [

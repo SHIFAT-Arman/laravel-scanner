@@ -30,6 +30,10 @@ new #[Title('Attendees')] class extends Component
 
     public string $status = 'all';
 
+    public string $emailStatus = 'all';
+
+    public string $rowFilter = 'all';
+
     public string $recipientColumn = 'outlook_email';
 
     public int $perPage = 10;
@@ -64,6 +68,16 @@ new #[Title('Attendees')] class extends Component
     }
 
     public function updatedStatus(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedEmailStatus(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedRowFilter(): void
     {
         $this->resetPage();
     }
@@ -362,6 +376,19 @@ new #[Title('Attendees')] class extends Component
             ))
             ->when($this->status === 'received', fn ($query) => $query->where('received', true))
             ->when($this->status === 'unreceived', fn ($query) => $query->where('received', false))
+            ->when(in_array($this->emailStatus, ['sent', 'failed'], true), fn ($query) => $query->where('invitation_email_status', $this->emailStatus))
+            ->when($this->rowFilter === 'missing_aiub_id', fn ($query) => $query->where(
+                fn ($query) => $query->whereNull('aiub_id')->orWhere('aiub_id', ''),
+            ))
+            ->when($this->rowFilter === 'duplicate_name', fn ($query) => $query->whereIn(
+                'name',
+                Attendee::query()
+                    ->select('name')
+                    ->whereNotNull('name')
+                    ->where('name', '!=', '')
+                    ->groupBy('name')
+                    ->havingRaw('COUNT(*) > 1'),
+            ))
             ->orderBy('name')
             ->orderBy('uuid')
             ->paginate($perPage);
@@ -518,18 +545,38 @@ new #[Title('Attendees')] class extends Component
         @endif
     </flux:card>
 
-    <div class="grid gap-4 sm:grid-cols-[1fr_12rem_10rem]">
+    <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-[1fr_12rem_12rem_10rem_auto]">
         <flux:input wire:model.live.debounce.300ms="search" :label="__('Search')" :placeholder="__('UUID or name')" />
         <flux:select wire:model.live="status" :label="__('Receipt status')">
             <flux:select.option value="all">{{ __('All') }}</flux:select.option>
             <flux:select.option value="received">{{ __('Received') }}</flux:select.option>
             <flux:select.option value="unreceived">{{ __('Unreceived') }}</flux:select.option>
         </flux:select>
+        <flux:select wire:model.live="emailStatus" :label="__('Email status')">
+            <flux:select.option value="all">{{ __('All') }}</flux:select.option>
+            <flux:select.option value="sent">{{ __('Sent') }}</flux:select.option>
+            <flux:select.option value="failed">{{ __('Failed') }}</flux:select.option>
+        </flux:select>
         <flux:select wire:model.live="perPage" :label="__('Rows per page')">
             <flux:select.option value="10">10</flux:select.option>
             <flux:select.option value="50">50</flux:select.option>
             <flux:select.option value="100">100</flux:select.option>
         </flux:select>
+        <div class="flex items-end">
+            <flux:dropdown>
+                <flux:button icon-trailing="chevron-down">
+                    {{ match ($rowFilter) { 'missing_aiub_id' => __('Without AIUB ID'), 'duplicate_name' => __('Duplicate name'), default => __('Filter') } }}
+                </flux:button>
+
+                <flux:menu>
+                    <flux:menu.radio.group wire:model.live="rowFilter">
+                        <flux:menu.radio value="all">{{ __('All') }}</flux:menu.radio>
+                        <flux:menu.radio value="missing_aiub_id">{{ __('Without AIUB ID') }}</flux:menu.radio>
+                        <flux:menu.radio value="duplicate_name">{{ __('Duplicate name') }}</flux:menu.radio>
+                    </flux:menu.radio.group>
+                </flux:menu>
+            </flux:dropdown>
+        </div>
     </div>
 
     <flux:card>
