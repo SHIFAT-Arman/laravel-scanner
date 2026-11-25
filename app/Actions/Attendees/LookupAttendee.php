@@ -8,15 +8,17 @@ use Illuminate\Support\Str;
 
 class LookupAttendee
 {
-    public function handle(string $uuid): ?Attendee
+    public function handle(string $identifier): ?Attendee
     {
-        if (! Str::isUuid($uuid)) {
+        $identifier = trim($identifier);
+
+        if ($identifier === '') {
             return null;
         }
 
         return Attendee::query()
             ->select(['uuid', 'received', 'received_at', ...AttendeeDisplaySetting::enabledFields()])
-            ->where('uuid', $uuid)
+            ->where(Str::isUuid($identifier) ? 'uuid' : 'aiub_id', $identifier)
             ->first();
     }
 }

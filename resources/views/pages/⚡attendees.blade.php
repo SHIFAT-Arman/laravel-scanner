@@ -30,7 +30,7 @@ new #[Title('Attendees')] class extends Component
 
     public string $status = 'all';
 
-    public string $recipientColumn = 'email';
+    public string $recipientColumn = 'outlook_email';
 
     public int $perPage = 10;
 
@@ -482,19 +482,19 @@ new #[Title('Attendees')] class extends Component
             <flux:text class="mt-2">{{ __('Search attendees and manage their details.') }}</flux:text>
         </div>
 
-        <div class="grid grid-cols-2 gap-2 sm:flex sm:items-end">
-            <flux:select wire:model="recipientColumn" :label="__('Invitation email')">
+        <div class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-end">
+            <flux:select wire:model="recipientColumn" :label="__('Invitation email')" class="w-full sm:w-48">
                 <flux:select.option value="email">{{ __('Email') }}</flux:select.option>
                 <flux:select.option value="outlook_email">{{ __('Outlook email') }}</flux:select.option>
             </flux:select>
-            <flux:button class="min-w-0 whitespace-normal! sm:whitespace-nowrap!" wire:click="downloadSelectedQrs" wire:loading.attr="disabled" wire:target="downloadSelectedQrs">
+            <flux:button class="w-full sm:w-auto" wire:click="downloadSelectedQrs" wire:loading.attr="disabled" wire:target="downloadSelectedQrs">
                 {{ __('Download selected QRs') }}
             </flux:button>
-            <flux:button class="min-w-0 whitespace-normal! sm:whitespace-nowrap!" wire:click="queueSelectedInvitations" wire:loading.attr="disabled" wire:target="queueSelectedInvitations">
+            <flux:button class="w-full sm:w-auto" wire:click="queueSelectedInvitations" wire:loading.attr="disabled" wire:target="queueSelectedInvitations">
                 {{ __('Queue selected emails') }}
             </flux:button>
-            <flux:button class="min-w-0 whitespace-normal! sm:whitespace-nowrap!" wire:click="export">{{ __('Export CSV') }}</flux:button>
-            <flux:button class="col-span-2 w-full sm:w-auto" variant="primary" wire:click="create">{{ __('Add attendee') }}</flux:button>
+            <flux:button class="w-full sm:w-auto" wire:click="export">{{ __('Export CSV') }}</flux:button>
+            <flux:button class="w-full sm:w-auto" variant="primary" wire:click="create">{{ __('Add attendee') }}</flux:button>
         </div>
     </div>
 
@@ -533,6 +533,12 @@ new #[Title('Attendees')] class extends Component
     </div>
 
     <flux:card>
+        <div class="mb-4 flex justify-end">
+            <flux:button wire:click="$refresh" wire:loading.attr="disabled" wire:target="$refresh">
+                {{ __('Refresh table') }}
+            </flux:button>
+        </div>
+
         <flux:checkbox.group wire:model.live="selected">
         <flux:table :paginate="$this->attendees" bleed>
             <flux:table.columns>

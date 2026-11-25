@@ -1,12 +1,13 @@
 <?php
 
 use App\Http\Controllers\AttendeeLookupController;
+use App\Http\Controllers\DashboardController;
 use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'welcome')->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::view('dashboard', 'dashboard')->name('dashboard');
+    Route::get('dashboard', DashboardController::class)->name('dashboard');
 
     Route::livewire('scanner', 'pages::scanner')->name('scanner');
 

@@ -44,7 +44,31 @@ test('staff can open the scanner and find an attendee', function () {
         ->assertDontSee('ada@example.com');
 });
 
-test('invalid UUID shows a safe not found state', function () {
+test('staff can find and receive an attendee by AIUB ID', function () {
+    $staff = User::factory()->create(['role' => 'staff']);
+    $uuid = (string) Str::uuid();
+    DB::table('attendees')->insert([
+        'uuid' => $uuid,
+        'name' => 'Ada Lovelace',
+        'aiub_id' => '23-12345-1',
+    ]);
+
+    Livewire::actingAs($staff)
+        ->test('pages::scanner')
+        ->set('uuid', '23-12345-1')
+        ->call('lookup')
+        ->assertSet('uuid', $uuid)
+        ->assertSeeText('Ada Lovelace')
+        ->call('markReceived')
+        ->assertSeeText('Received');
+
+    $this->assertDatabaseHas('attendees', [
+        'uuid' => $uuid,
+        'received' => true,
+    ]);
+});
+
+test('unknown identifier shows a safe not found state', function () {
     $staff = User::factory()->create(['role' => 'staff']);
 
     Livewire::actingAs($staff)

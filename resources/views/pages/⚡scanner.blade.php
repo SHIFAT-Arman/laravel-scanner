@@ -24,6 +24,7 @@ new #[Title('Scanner')] class extends Component
     {
         $this->uuid = trim($scannedUuid ?? $this->uuid);
         $attendee = $lookupAttendee->handle($this->uuid);
+        $this->uuid = $attendee?->uuid ?? $this->uuid;
         $this->attendee = $attendee ? Arr::except($attendee->attributesToArray(), ['received', 'received_at']) : null;
         $this->notFound = $attendee === null;
         $this->receiptStatus = $attendee?->received ? 'already' : null;
@@ -50,7 +51,7 @@ new #[Title('Scanner')] class extends Component
 <div class="mx-auto flex w-full max-w-xl flex-col gap-6" x-data="qrScanner">
     <div>
         <flux:heading size="xl">{{ __('Scan attendee QR') }}</flux:heading>
-        <flux:text class="mt-2">{{ __('Point the camera at an attendee QR code or enter its UUID.') }}</flux:text>
+        <flux:text class="mt-2">{{ __('Point the camera at an attendee QR code or search by UUID or AIUB ID.') }}</flux:text>
     </div>
 
     <flux:card class="space-y-4">
@@ -71,14 +72,14 @@ new #[Title('Scanner')] class extends Component
     </flux:card>
 
     <form wire:submit="lookup" class="flex flex-col gap-3 sm:flex-row">
-        <flux:input wire:model="uuid" :label="__('Attendee UUID')" class="flex-1" autocomplete="off" />
+        <flux:input wire:model="uuid" :label="__('Attendee UUID or AIUB ID')" class="flex-1" autocomplete="off" />
         <flux:button variant="primary" type="submit" class="sm:self-end" wire:loading.attr="disabled">
             {{ __('Find attendee') }}
         </flux:button>
     </form>
 
     @if ($notFound)
-        <flux:callout variant="danger" heading="{{ __('Attendee not found') }}" text="{{ __('Check the QR code or UUID and try again.') }}" />
+        <flux:callout variant="danger" heading="{{ __('Attendee not found') }}" text="{{ __('Check the QR code, UUID, or AIUB ID and try again.') }}" />
     @endif
 
     @if ($attendee)

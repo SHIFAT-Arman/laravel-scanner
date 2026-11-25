@@ -73,6 +73,22 @@ test('admin can show one hundred attendees per page', function () {
         ->assertDontSeeText('Attendee 101');
 });
 
+test('admin can refresh the attendee table', function () {
+    $admin = User::factory()->create(['role' => 'admin']);
+    $component = Livewire::actingAs($admin)->test('pages::attendees')
+        ->assertSeeText('Refresh table')
+        ->assertDontSeeText('Ada Lovelace');
+
+    DB::table('attendees')->insert([
+        'uuid' => (string) Str::uuid(),
+        'name' => 'Ada Lovelace',
+    ]);
+
+    $component
+        ->call('$refresh')
+        ->assertSeeText('Ada Lovelace');
+});
+
 test('admin can reset a received attendee', function () {
     $admin = User::factory()->create(['role' => 'admin']);
     $uuid = (string) Str::uuid();
@@ -316,7 +332,7 @@ test('admin can queue one development invitation for their own address', functio
     $this->assertDatabaseHas('attendees', ['uuid' => $uuid, 'invitation_email_status' => 'queued']);
 });
 
-test('admin can queue invitations using Outlook email addresses', function () {
+test('invitations use Outlook email addresses by default', function () {
     Queue::fake([SendMemberOrientationInvitation::class]);
     config(['mail.attendee_dev_mode' => false]);
     $admin = User::factory()->create(['role' => 'admin']);
@@ -329,7 +345,7 @@ test('admin can queue invitations using Outlook email addresses', function () {
 
     Livewire::actingAs($admin)
         ->test('pages::attendees')
-        ->set('recipientColumn', 'outlook_email')
+        ->assertSet('recipientColumn', 'outlook_email')
         ->call('queueInvitation', $uuid)
         ->assertHasNoErrors();
 
